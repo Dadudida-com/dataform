@@ -7,7 +7,7 @@ import { IActionProto, Session } from "df/core/session";
 import { Table } from "df/core/table";
 import { dataform } from "df/protos/ts";
 
-const pathSeperator = (() => {
+export const pathSeperator = (() => {
   if (typeof process !== "undefined") {
     return process.platform === "win32" ? "\\" : "/";
   }
@@ -31,6 +31,10 @@ export function baseFilename(fullPath: string) {
     .split(pathSeperator)
     .slice(-1)[0]
     .split(".")[0];
+}
+
+export function getEscapedFileName(path: string) {
+  return baseFilename(path).replace(/\\/g, '\\\\')
 }
 
 export function matchPatterns(patterns: string[], values: string[]) {
@@ -270,14 +274,19 @@ export function tableTypeEnumToString(enumType: dataform.TableType) {
   return dataform.TableType[enumType].toLowerCase();
 }
 
+
 export function setOrValidateTableEnumType(table: dataform.ITable) {
-  let enumTypeFromStr: dataform.TableType|null = null;
+  let enumTypeFromStr: dataform.TableType | null = null;
   if (table.type !== "" && table.type !== undefined) {
     enumTypeFromStr = tableTypeStringToEnum(table.type, true);
   }
   if (table.enumType === dataform.TableType.UNKNOWN_TYPE || table.enumType === undefined) {
     table.enumType = enumTypeFromStr!;
   } else if (enumTypeFromStr !== null && table.enumType !== enumTypeFromStr) {
-    throw new Error(`Table str type "${table.type}" and enumType "${tableTypeEnumToString(table.enumType)}" are not equivalent.`);
+    throw new Error(
+      `Table str type "${table.type}" and enumType "${tableTypeEnumToString(
+        table.enumType
+      )}" are not equivalent.`
+    );
   }
 }

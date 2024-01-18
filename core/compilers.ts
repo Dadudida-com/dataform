@@ -32,7 +32,7 @@ function compileTableSql(code: string, path: string) {
   );
 
   return `
-  publish("${utils.baseFilename(path)}").query(ctx => {
+  publish("${utils.getEscapedFileName(path)}").query(ctx => {
     ${functionsBindings.join("\n")}
     ${js}
     return \`${sql}\`;
@@ -46,7 +46,7 @@ function compileOperationSql(code: string, path: string) {
   );
 
   return `
-  operate("${utils.baseFilename(path)}").queries(ctx => {
+  operate("${utils.getEscapedFileName(path)}").queries(ctx => {
     ${functionsBindings.join("\n")}
     ${js}
     return \`${sql}\`.split("\\n---\\n");
@@ -60,7 +60,7 @@ function compileAssertionSql(code: string, path: string) {
   );
 
   return `
-  assert("${utils.baseFilename(path)}").query(ctx => {
+  assert("${utils.getEscapedFileName(path)}").query(ctx => {
     ${functionsBindings.join("\n")}
     ${js}
     return \`${sql}\`;
@@ -128,7 +128,7 @@ function compileSqlx(rootNode: SyntaxTreeNode, path: string) {
 
   return `dataform.sqlxAction({
   sqlxConfig: {
-    name: "${utils.baseFilename(path)}",
+    name: "${utils.getEscapedFileName(path)}",
     type: "operations",
     ...${config || "{}"}
   },
@@ -209,6 +209,7 @@ function extractSqlxParts(rootNode: SyntaxTreeNode) {
             SyntaxTreeNodeType.JAVASCRIPT_TEMPLATE_STRING_PLACEHOLDER,
             SyntaxTreeNodeType.SQL_COMMENT,
             SyntaxTreeNodeType.SQL_LITERAL_STRING,
+            SyntaxTreeNodeType.SQL_LITERAL_MULTILINE_STRING,
             SyntaxTreeNodeType.SQL_STATEMENT_SEPARATOR
           ].includes(node.type)
       )
@@ -314,7 +315,11 @@ const SQL_STATEMENT_ESCAPERS = new Map([
   [
     SyntaxTreeNodeType.SQL_LITERAL_STRING,
     (str: string) => str.replace(/\\/g, "\\\\").replace(/\`/g, "\\`")
-  ]
+  ],
+  [
+    SyntaxTreeNodeType.SQL_LITERAL_MULTILINE_STRING,
+    (str: string) => str.replace(/\\/g, "\\\\").replace(/\`/g, "\\`")
+  ],
 ]);
 
 function escapeNode(node: string | SyntaxTreeNode) {
